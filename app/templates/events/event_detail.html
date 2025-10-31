@@ -69,11 +69,11 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">← Назад к списку</a>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">← Назад к списку</a>
                 
                 {% if current_user.is_authenticated %}
                     {% if current_user.role.name in ['administrator', 'moderator'] %}
-                        <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-outline-primary">
+                        <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-outline-primary">
                             ✏️ Редактировать
                         </a>
                     {% endif %}
@@ -152,12 +152,12 @@
                                 <td>{{ registration.registration_date.strftime('%d.%m.%Y %H:%M') }}</td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('accept_registration', event_id=event.id, registration_id=registration.id) }}" 
+                                        <a href="{{ url_for('events.accept_registration', event_id=event.id, registration_id=registration.id) }}" 
                                            class="btn btn-success" 
                                            onclick="return confirm('Принять заявку от {{ registration.volunteer.full_name }}?')">
                                             ✅ Принять
                                         </a>
-                                        <a href="{{ url_for('reject_registration', event_id=event.id, registration_id=registration.id) }}" 
+                                        <a href="{{ url_for('events.reject_registration', event_id=event.id, registration_id=registration.id) }}" 
                                            class="btn btn-danger"
                                            onclick="return confirm('Отклонить заявку от {{ registration.volunteer.full_name }}?')">
                                             ❌ Отклонить
@@ -225,7 +225,7 @@
                 <h5 class="modal-title" id="registrationModalLabel">Регистрация на мероприятие</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ url_for('register_for_event', event_id=event.id) }}">
+            <form method="POST" action="{{ url_for('events.register_for_event', event_id=event.id) }}">
                 <div class="modal-body">
                     {{ form.hidden_tag() }}
                     <p>Вы регистрируетесь на мероприятие: <strong>"{{ event.title }}"</strong></p>

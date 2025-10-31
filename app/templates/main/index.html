@@ -41,13 +41,13 @@
                 <!-- Кнопки действий -->
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">
+                        <a href="{{ url_for('events.event_detail', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">
                             Просмотр
                         </a>
                         
                         {% if current_user.is_authenticated %}
                             {% if current_user.role.name in ['administrator', 'moderator'] %}
-                                <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-outline-secondary btn-sm">
+                                <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-outline-secondary btn-sm">
                                     Редактировать
                                 </a>
                             {% endif %}
@@ -81,7 +81,7 @@
     <ul class="pagination justify-content-center">
         {% if events.has_prev %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', page=events.prev_num) }}">Назад</a>
+                <a class="page-link" href="{{ url_for('main.index', page=events.prev_num) }}">Назад</a>
             </li>
         {% else %}
             <li class="page-item disabled">
@@ -97,7 +97,7 @@
                     </li>
                 {% else %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a>
+                        <a class="page-link" href="{{ url_for('main.index', page=page_num) }}">{{ page_num }}</a>
                     </li>
                 {% endif %}
             {% else %}
@@ -109,7 +109,7 @@
 
         {% if events.has_next %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', page=events.next_num) }}">Вперед</a>
+                <a class="page-link" href="{{ url_for('main.index', page=events.next_num) }}">Вперед</a>
             </li>
         {% else %}
             <li class="page-item disabled">
@@ -124,7 +124,7 @@
 {% if current_user.is_authenticated and current_user.role.name == 'administrator' %}
 <div class="row mt-4">
     <div class="col-md-12 text-center">
-        <a href="{{ url_for('new_event') }}" class="btn btn-primary btn-lg">
+        <a href="{{ url_for('events.new_event') }}" class="btn btn-primary btn-lg">
             <i class="bi bi-plus-circle"></i> Добавить мероприятие
         </a>
     </div>
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Обновляем action формы
         const deleteForm = deleteEventModal.querySelector('#deleteEventForm');
-        deleteForm.action = "{{ url_for('delete_event', event_id=0) }}".replace('0', eventId);
+        deleteForm.action = "{{ url_for('events.delete_event', event_id=0) }}".replace('0', eventId);
     });
 });
 </script>

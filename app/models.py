@@ -4,9 +4,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import date
 import markdown
-from utils import sanitize_html
 
-db = SQLAlchemy()
+from app import db, login_manager
+
+
 
 # Соединительная таблица для связи многие-ко-многим между мероприятиями и волонтерами
 event_volunteers = db.Table('event_volunteers',
@@ -169,3 +170,31 @@ class VolunteerRegistration(db.Model):
     
     # Уникальный constraint чтобы один волонтер не мог дважды зарегистрироваться на одно мероприятие
     __table_args__ = (db.UniqueConstraint('event_id', 'volunteer_id', name='unique_event_volunteer'),)
+
+# Перенесем функцию sanitize_html прямо в models.py
+def sanitize_html(html_content):
+    """Очистка HTML контента от потенциально опасных тегов"""
+    import bleach
+    
+    allowed_tags = [
+        'p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code',
+        'pre', 'a', 'img', 'div', 'span'
+    ]
+    allowed_attributes = {
+        'a': ['href', 'title'],
+        'img': ['src', 'alt', 'title'],
+        '*': ['class']
+    }
+    
+    return bleach.clean(
+        html_content,
+        tags=allowed_tags,
+        attributes=allowed_attributes,
+        strip=True
+    )
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))

@@ -10,7 +10,7 @@
                 <h4 class="card-title mb-0">Вход в систему</h4>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('login') }}">
+                <form method="POST" action="{{ url_for('auth.login') }}">
                     {{ form.hidden_tag() }}
                     
                     <div class="mb-3">

@@ -17,7 +17,7 @@ def save_image(file):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
         filename = timestamp + filename
         
-        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'app/static/uploads')
         os.makedirs(upload_folder, exist_ok=True)
         
         file_path = os.path.join(upload_folder, filename)
@@ -26,7 +26,7 @@ def save_image(file):
     return None
 
 def sanitize_html(html_content):
-    #Очистка HTML контента от потенциально опасных тегов
+    """Очистка HTML контента от потенциально опасных тегов"""
     allowed_tags = [
         'p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code',

@@ -1,5 +1,11 @@
+import sys
+import os
+
+# Добавляем корневую папку в путь Python
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__), 'app')))
+
 from app import app, db
-from models import Role, User, Event, VolunteerRegistration
+from app.models import Role, User, Event, VolunteerRegistration
 from datetime import date, timedelta
 
 with app.app_context():
@@ -52,7 +58,23 @@ with app.app_context():
     db.session.commit()
     print("Пользователи созданы")
     
+    # Создание мероприятий
+    events = []
+    for i in range(5):  # Создаем 5 мероприятий для теста
+        event = Event(
+            title=f'Тестовое мероприятие {i+1}',
+            description=f'Описание тестового мероприятия {i+1}. Это мероприятие предназначено для тестирования функционала системы поиска волонтёров.',
+            date=date.today() + timedelta(days=i*7),
+            location=f'Место проведения {i+1}',
+            required_volunteers=3 + i,
+            image_filename='default_event.jpg',
+            organizer_id=1 if i % 2 == 0 else 2
+        )
+        events.append(event)
     
+    db.session.add_all(events)
+    db.session.commit()
+    print("Мероприятия созданы")
     
     print("\n" + "="*50)
     print("База данных успешно пересоздана с каскадными связями!")
