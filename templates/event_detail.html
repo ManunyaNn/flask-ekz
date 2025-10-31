@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+{% set default_image = url_for('static', filename='images/default_event.jpg') %}
+<style>
+.event-image {
+    max-height: 400px;
+    object-fit: cover;
+    width: 100%;
+}
+.image-placeholder {
+    height: 200px;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    border: 2px dashed #dee2e6;
+}
+</style>
+<!-- Основная информация о мероприятии -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">{{ event.title }}</h4>
+                    <span class="badge {% if event.registration_status == 'Идёт набор волонтёров' %}bg-success{% elif event.registration_status == 'Регистрация закрыта' %}bg-warning{% else %}bg-secondary{% endif %}">
+                        {{ event.registration_status }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Безопасное отображение изображения -->
+                <div class="text-center mb-4">
+                    {% if event.image_filename and event.image_filename != 'default_event.jpg' %}
+                        <img src="{{ url_for('static', filename='uploads/' + event.image_filename) }}" 
+                             alt="{{ event.title }}" 
+                             class="event-image rounded"
+                             onerror="this.src='{{ default_image }}'; this.alt='Изображение не найдено'">
+                    {% else %}
+                        <div class="image-placeholder rounded">
+                            <div>
+                                <i class="bi bi-image fs-1"></i>
+                                <p class="mt-2 mb-0">Изображение мероприятия</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Описание мероприятия:</h5>
+                    <div class="event-description border rounded p-3 bg-light">
+                        {{ event.description_html|safe }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Дата:</strong> {{ event.date.strftime('%d.%m.%Y') }}</p>
+                        <p><strong>Место:</strong> {{ event.location }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Организатор:</strong> {{ event.organizer.full_name }}</p>
+                        <p><strong>Волонтёры:</strong> {{ event.volunteers_count }}/{{ event.required_volunteers }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">← Назад к списку</a>
+                
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role.name in ['administrator', 'moderator'] %}
+                        <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-outline-primary">
+                            ✏️ Редактировать
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список принятых волонтёров (для администраторов и модераторов) -->
+{% if current_user.is_authenticated and current_user.role.name in ['administrator', 'moderator'] %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">✅ Принятые волонтёры</h5>
+            </div>
+            <div class="card-body">
+                {% set accepted_volunteers = event.get_accepted_volunteers() %}
+                {% if accepted_volunteers %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th>
+                                <th>Контактная информация</th>
+                                <th>Дата регистрации</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registration in accepted_volunteers %}
+                            <tr>
+                                <td>{{ registration.volunteer.full_name }}</td>
+                                <td>{{ registration.contact_info }}</td>
+                                <td>{{ registration.registration_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">Нет принятых волонтёров</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Список ожидающих подтверждения (только для модераторов) -->
+{% if current_user.is_authenticated and current_user.role.name in ['administrator', 'moderator'] %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">⏳ Заявки на рассмотрении</h5>
+            </div>
+            <div class="card-body">
+                {% set pending_volunteers = event.get_pending_volunteers() %}
+                {% if pending_volunteers %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th>
+                                <th>Контактная информация</th>
+                                <th>Дата регистрации</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registration in pending_volunteers %}
+                            <tr>
+                                <td>{{ registration.volunteer.full_name }}</td>
+                                <td>{{ registration.contact_info }}</td>
+                                <td>{{ registration.registration_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('accept_registration', event_id=event.id, registration_id=registration.id) }}" 
+                                           class="btn btn-success" 
+                                           onclick="return confirm('Принять заявку от {{ registration.volunteer.full_name }}?')">
+                                            ✅ Принять
+                                        </a>
+                                        <a href="{{ url_for('reject_registration', event_id=event.id, registration_id=registration.id) }}" 
+                                           class="btn btn-danger"
+                                           onclick="return confirm('Отклонить заявку от {{ registration.volunteer.full_name }}?')">
+                                            ❌ Отклонить
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">Нет заявок, ожидающих рассмотрения</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Блок регистрации для обычных пользователей -->
+{% if current_user.is_authenticated and current_user.role.name == 'user' %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Моя регистрация</h5>
+            </div>
+            <div class="card-body">
+                {% if user_registration %}
+                    <!-- Пользователь уже зарегистрирован -->
+                    <div class="alert alert-info">
+                        <h6>Статус вашей заявки:</h6>
+                        <p><strong>Дата подачи:</strong> {{ user_registration.registration_date.strftime('%d.%m.%Y %H:%M') }}</p>
+                        <p><strong>Контактные данные:</strong> {{ user_registration.contact_info }}</p>
+                        <p><strong>Статус:</strong> 
+                            <span class="badge {% if user_registration.status == 'accepted' %}bg-success{% elif user_registration.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {% if user_registration.status == 'accepted' %}Принято
+                                {% elif user_registration.status == 'rejected' %}Отклонено
+                                {% else %}На рассмотрении{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                {% elif event.is_registration_open %}
+                    <!-- Кнопка регистрации -->
+                    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#registrationModal">
+                        📝 Зарегистрироваться на мероприятие
+                    </button>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <p class="mb-0">Регистрация на это мероприятие закрыта</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Модальное окно регистрации -->
+<div class="modal fade" id="registrationModal" tabindex="-1" aria-labelledby="registrationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registrationModalLabel">Регистрация на мероприятие</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('register_for_event', event_id=event.id) }}">
+                <div class="modal-body">
+                    {{ form.hidden_tag() }}
+                    <p>Вы регистрируетесь на мероприятие: <strong>"{{ event.title }}"</strong></p>
+                    
+                    <div class="mb-3">
+                        {{ form.contact_info.label(class="form-label") }}
+                        {{ form.contact_info(class="form-control", placeholder="Email, телефон или другие контакты") }}
+                        {% if form.contact_info.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.contact_info.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Укажите контактные данные для связи с организатором</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
